@@ -1,0 +1,10 @@
+[package]
+name = "kerougeli"
+version = "0.1.0"
+authors = ["Andrea Bragante"]
+edition = "2021"
+
+[dependencies]
+rltk = "0.8.7"
+specs = "0.20.0"
+specs-derive = "0.4.1"
