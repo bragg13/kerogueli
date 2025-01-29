@@ -1,3 +1,5 @@
+pub mod map;
+use map::{draw_map, xy_idx, TileType};
 use rltk::{GameState, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
 use specs_derive::Component;
@@ -17,13 +19,10 @@ struct Renderable {
     bg: RGB,
 }
 
-#[derive(Component)]
-struct LeftMover {}
-
 #[derive(Component, Debug)]
-struct Player {}
+pub struct Player {}
 
-struct State {
+pub struct State {
     ecs: World,
 }
 impl GameState for State {
@@ -33,6 +32,8 @@ impl GameState for State {
 
         player_input(self, ctx);
         self.run_systems();
+        let map = self.ecs.fetch::<Vec<map::TileType>>();
+        draw_map(&map, ctx);
 
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
@@ -43,25 +44,8 @@ impl GameState for State {
     }
 }
 
-// likes to walk left
-struct LeftWalker {}
-impl<'a> System<'a> for LeftWalker {
-    type SystemData = (ReadStorage<'a, LeftMover>, WriteStorage<'a, Position>);
-
-    fn run(&mut self, (lefty, mut pos): Self::SystemData) {
-        for (_lefty, pos) in (&lefty, &mut pos).join() {
-            pos.x -= 1;
-            if pos.x < 0 {
-                pos.x = 79;
-            }
-        }
-    }
-}
-
 impl State {
     fn run_systems(&mut self) {
-        let mut lw = LeftWalker {};
-        lw.run_now(&self.ecs);
         self.ecs.maintain();
     }
 }
@@ -71,10 +55,26 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     // this gains access to players and positions in the world (ecs)
     let mut positions = ecs.write_storage::<Position>();
     let mut players = ecs.write_storage::<Player>();
+    let map = ecs.fetch::<Vec<TileType>>();
 
     for (_player, pos) in (&mut players, &mut positions).join() {
-        pos.x = min(79, max(0, pos.x + delta_x));
-        pos.y = min(49, max(0, pos.y + delta_y));
+        let new_x: i32 = pos.x + delta_x;
+        let new_y: i32 = pos.y + delta_y;
+
+        // solution 1 - more scalable
+        match map[xy_idx(new_x, new_y)] {
+            TileType::Wall => {}
+            TileType::Floor => {
+                pos.x = min(79, max(0, pos.x + delta_x));
+                pos.y = min(49, max(0, pos.y + delta_y));
+            }
+        }
+
+        // solution 2
+        // if map[xy_idx(new_x, new_y)] == TileType::Floor {
+        //     pos.x = min(79, max(0, pos.x + delta_x));
+        //     pos.y = min(49, max(0, pos.y + delta_y));
+        // }
     }
 }
 
@@ -112,11 +112,11 @@ fn main() -> rltk::BError {
         .build()?;
 
     let mut gs = State { ecs: World::new() };
+    gs.ecs.insert(map::new_map());
 
     // registro i componenti?
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
-    gs.ecs.register::<LeftMover>();
     gs.ecs.register::<Player>();
 
     // creo un'entita player
@@ -130,23 +130,6 @@ fn main() -> rltk::BError {
         })
         .with(Player {})
         .build();
-
-    // mi piace creare entita
-    for i in 0..15 {
-        gs.ecs
-            .create_entity()
-            .with(Position {
-                x: i * 5,
-                y: 15 + i,
-            })
-            .with(Renderable {
-                glyph: rltk::to_cp437('&'),
-                fg: RGB::named(rltk::RED),
-                bg: RGB::named(rltk::BLACK),
-            })
-            .with(LeftMover {})
-            .build();
-    }
 
     rltk::main_loop(context, gs)
 }
