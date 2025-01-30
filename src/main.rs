@@ -3,6 +3,8 @@ mod components;
 pub use components::*;
 mod map;
 pub use map::*;
+mod rect;
+pub use rect::Rect;
 
 mod player;
 use rltk::{GameState, Rltk, RGB};
@@ -43,7 +45,7 @@ fn main() -> rltk::BError {
         .build()?;
 
     let mut gs = State { ecs: World::new() };
-    gs.ecs.insert(map::new_map());
+    gs.ecs.insert(map::new_map_rooms_and_corridors());
 
     // registro i componenti?
     gs.ecs.register::<Position>();

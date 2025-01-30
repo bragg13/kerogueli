@@ -1,5 +1,7 @@
 use rltk::{Rltk, RGB};
 
+use crate::Rect;
+
 // so I can copy and not "move", clone programmatically, and check for type equality
 #[derive(PartialEq, Copy, Clone)]
 pub enum TileType {
@@ -11,32 +13,22 @@ pub fn xy_idx(x: i32, y: i32) -> usize {
     (y as usize * 80) + x as usize
 }
 
-pub fn new_map() -> Vec<TileType> {
-    let mut map = vec![TileType::Floor; 80 * 50];
-
-    // walls around
-    for x in 0..80 {
-        map[xy_idx(x, 0)] = TileType::Wall;
-        map[xy_idx(x, 50 - 1)] = TileType::Wall;
-    }
-    for y in 0..50 {
-        map[xy_idx(0, y)] = TileType::Wall;
-        map[xy_idx(80 - 1, y)] = TileType::Wall;
-    }
-
-    // lets go random!
-    let mut rng = rltk::RandomNumberGenerator::new();
-
-    for _i in 0..400 {
-        let x = rng.roll_dice(1, 80 - 1);
-        let y = rng.roll_dice(1, 50 - 1);
-        let idx = xy_idx(x, y);
-
-        // we're gonna start here - better not have a wall
-        if idx != xy_idx(80 / 2, 50 / 2) {
-            map[idx] = TileType::Wall;
+fn apply_room_to_map(room: &Rect, map: &mut [TileType]) {
+    for y in room.y1 + 1..=room.y2 {
+        for x in room.x1 + 1..=room.x2 {
+            map[xy_idx(x, y)] = TileType::Floor
         }
     }
+}
+
+pub fn new_map_rooms_and_corridors() -> Vec<TileType> {
+    let mut map = vec![TileType::Wall; 80 * 50];
+
+    let room1: Rect = Rect::new(20, 10, 10, 10);
+    let room2: Rect = Rect::new(60, 20, 10, 10);
+    apply_room_to_map(&room1, &mut map);
+    apply_room_to_map(&room2, &mut map);
+
     map
 }
 
