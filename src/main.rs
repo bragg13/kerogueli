@@ -50,8 +50,8 @@ pub fn read_input(gs: &mut State, ctx: &mut Rltk) {
             VirtualKeyCode::D => player::try_move_player(1, 0, &mut gs.ecs),
             VirtualKeyCode::Right => player::try_move_player(1, 0, &mut gs.ecs),
 
-            // boh
-            VirtualKeyCode::Space => println!("SPACEBAR is useless rn"),
+            // teleport the player to a random room
+            VirtualKeyCode::Space => player::move_to_next_room(&mut gs.ecs),
 
             // matchall
             _ => {}
@@ -72,8 +72,10 @@ fn main() -> rltk::BError {
         .build()?;
 
     let mut gs = State { ecs: World::new() };
-    let (map, _rooms): (Vec<TileType>, Vec<Rect>) = map::new_map_rooms_and_corridors();
+    let (map, rooms) = map::new_map_rooms_and_corridors();
+    let (player_x, player_y) = rooms[0].center();
     gs.ecs.insert(map);
+    gs.ecs.insert(rooms);
 
     // registro i componenti?
     gs.ecs.register::<Position>();
@@ -83,7 +85,10 @@ fn main() -> rltk::BError {
     // creo un'entita player
     gs.ecs
         .create_entity()
-        .with(Position { x: 40, y: 25 })
+        .with(Position {
+            x: player_x,
+            y: player_y,
+        })
         .with(Renderable {
             glyph: rltk::to_cp437('@'),
             fg: RGB::named(rltk::YELLOW),

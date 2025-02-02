@@ -38,20 +38,6 @@ fn apply_vtunnel(map: &mut [TileType], y1: i32, y2: i32, x: i32) {
     }
 }
 
-/// add a random new room to the map
-// pub fn add_room(map: &mut Vec<TileType>, rooms: &mut Vec<Rect>) {
-//     let mut rng = rltk::RandomNumberGenerator::new();
-//     const MAX_ROOMS: i32 = 16;
-//     const MIN_SIZE: i32 = 6;
-//     const MAX_SIZE: i32 = 15;
-//     let w: i32 = rng.range(MIN_SIZE, MAX_SIZE);
-//     let h: i32 = rng.range(MIN_SIZE, MAX_SIZE);
-
-//     let x = rng.roll_dice(1, 80 - w - 1);
-//     let y = rng.roll_dice(1, 50 - h - 1);
-//     let new_room = Rect::new(x, y, w, h);
-// }
-
 pub fn new_map_rooms_and_corridors() -> (Vec<TileType>, Vec<Rect>) {
     let mut map = vec![TileType::Water; 80 * 50];
     let mut rooms: Vec<Rect> = Vec::new();
@@ -60,6 +46,7 @@ pub fn new_map_rooms_and_corridors() -> (Vec<TileType>, Vec<Rect>) {
     const MAX_SIZE: i32 = 15;
 
     let mut rng = rltk::RandomNumberGenerator::new();
+
     for _ in 0..MAX_ROOMS {
         let w: i32 = rng.range(MIN_SIZE, MAX_SIZE);
         let h: i32 = rng.range(MIN_SIZE, MAX_SIZE);
@@ -70,7 +57,7 @@ pub fn new_map_rooms_and_corridors() -> (Vec<TileType>, Vec<Rect>) {
 
         // check if new room overlaps with others
         let mut ok = true;
-        for other_room in &rooms {
+        for other_room in rooms.iter() {
             if new_room.intersect(other_room) {
                 ok = false;
             }
