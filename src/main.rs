@@ -7,7 +7,7 @@ mod rect;
 pub use rect::Rect;
 
 mod player;
-use rltk::{GameState, Rltk, RGB};
+use rltk::{GameState, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
 
 pub struct State {
@@ -18,7 +18,7 @@ impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
         ctx.cls();
 
-        player::player_input(self, ctx);
+        read_input(self, ctx);
         self.run_systems();
         let map = self.ecs.fetch::<Vec<map::TileType>>();
         draw_map(&map, ctx);
@@ -29,6 +29,33 @@ impl GameState for State {
         for (pos, render) in (&positions, &renderables).join() {
             ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
         }
+    }
+}
+
+// qui per leggere la tastiera
+pub fn read_input(gs: &mut State, ctx: &mut Rltk) {
+    match ctx.key {
+        None => {} // nothing happened
+        Some(key) => match key {
+            // movement
+            VirtualKeyCode::W => player::try_move_player(0, -1, &mut gs.ecs),
+            VirtualKeyCode::Up => player::try_move_player(0, -1, &mut gs.ecs),
+
+            VirtualKeyCode::S => player::try_move_player(0, 1, &mut gs.ecs),
+            VirtualKeyCode::Down => player::try_move_player(0, 1, &mut gs.ecs),
+
+            VirtualKeyCode::A => player::try_move_player(-1, 0, &mut gs.ecs),
+            VirtualKeyCode::Left => player::try_move_player(-1, 0, &mut gs.ecs),
+
+            VirtualKeyCode::D => player::try_move_player(1, 0, &mut gs.ecs),
+            VirtualKeyCode::Right => player::try_move_player(1, 0, &mut gs.ecs),
+
+            // boh
+            VirtualKeyCode::Space => println!("SPACEBAR is useless rn"),
+
+            // matchall
+            _ => {}
+        },
     }
 }
 
@@ -45,7 +72,8 @@ fn main() -> rltk::BError {
         .build()?;
 
     let mut gs = State { ecs: World::new() };
-    gs.ecs.insert(map::new_map_rooms_and_corridors());
+    let (map, _rooms): (Vec<TileType>, Vec<Rect>) = map::new_map_rooms_and_corridors();
+    gs.ecs.insert(map);
 
     // registro i componenti?
     gs.ecs.register::<Position>();

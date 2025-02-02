@@ -1,6 +1,6 @@
 use rltk::RGB;
 use specs::prelude::*;
-use specs_derive::*;
+use specs_derive::Component;
 
 #[derive(Component)]
 pub struct Position {
@@ -10,7 +10,7 @@ pub struct Position {
 
 #[derive(Component)]
 pub struct Renderable {
-    pub glyph: rltk::FontCharType,
+    pub glyph: rltk::FontCharType, // would like to have a texture here at some point
     pub fg: RGB,
     pub bg: RGB,
 }
