@@ -38,17 +38,10 @@ pub fn read_input(gs: &mut State, ctx: &mut Rltk) {
         None => {} // nothing happened
         Some(key) => match key {
             // movement
-            VirtualKeyCode::W => player::try_move_player(0, -1, &mut gs.ecs),
-            VirtualKeyCode::Up => player::try_move_player(0, -1, &mut gs.ecs),
-
-            VirtualKeyCode::S => player::try_move_player(0, 1, &mut gs.ecs),
-            VirtualKeyCode::Down => player::try_move_player(0, 1, &mut gs.ecs),
-
-            VirtualKeyCode::A => player::try_move_player(-1, 0, &mut gs.ecs),
-            VirtualKeyCode::Left => player::try_move_player(-1, 0, &mut gs.ecs),
-
-            VirtualKeyCode::D => player::try_move_player(1, 0, &mut gs.ecs),
-            VirtualKeyCode::Right => player::try_move_player(1, 0, &mut gs.ecs),
+            VirtualKeyCode::Up | VirtualKeyCode::W => player::try_move_player(0, -1, &mut gs.ecs),
+            VirtualKeyCode::Down | VirtualKeyCode::S => player::try_move_player(0, 1, &mut gs.ecs),
+            VirtualKeyCode::Left | VirtualKeyCode::A => player::try_move_player(-1, 0, &mut gs.ecs),
+            VirtualKeyCode::Right | VirtualKeyCode::D => player::try_move_player(1, 0, &mut gs.ecs),
 
             // teleport the player to a random room
             VirtualKeyCode::Space => player::move_to_next_room(&mut gs.ecs),
