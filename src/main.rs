@@ -20,8 +20,8 @@ impl GameState for State {
 
         read_input(self, ctx);
         self.run_systems();
-        let map = self.ecs.fetch::<Vec<map::TileType>>();
-        draw_map(&map, ctx);
+        let map = self.ecs.fetch::<Map>();
+        draw_map(&map.tiles, ctx);
 
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
@@ -44,7 +44,7 @@ pub fn read_input(gs: &mut State, ctx: &mut Rltk) {
             VirtualKeyCode::Right | VirtualKeyCode::D => player::try_move_player(1, 0, &mut gs.ecs),
 
             // teleport the player to a random room
-            VirtualKeyCode::Space => player::move_to_next_room(&mut gs.ecs),
+            VirtualKeyCode::Space => player::move_to_random_room(&mut gs.ecs),
 
             // matchall
             _ => {}
@@ -65,10 +65,9 @@ fn main() -> rltk::BError {
         .build()?;
 
     let mut gs = State { ecs: World::new() };
-    let (map, rooms) = map::new_map_rooms_and_corridors();
-    let (player_x, player_y) = rooms[0].center();
+    let map = map::Map::new_map_rooms_and_corridors();
+    let (player_x, player_y) = map.rooms[0].center();
     gs.ecs.insert(map);
-    gs.ecs.insert(rooms);
 
     // registro i componenti?
     gs.ecs.register::<Position>();
