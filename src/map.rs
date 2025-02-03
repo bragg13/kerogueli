@@ -1,5 +1,6 @@
-use crate::Rect;
-use rltk::{Rltk, RGB};
+use crate::{Player, Rect, Viewshed};
+use rltk::{Algorithm2D, BaseMap, Point, Rltk, RGB};
+use specs::{Join, World, WorldExt};
 use std::cmp::{max, min};
 
 // so I can copy and not "move", clone programmatically, and check for type equality
@@ -105,37 +106,60 @@ impl Map {
     }
 }
 
-pub fn draw_map(map: &[TileType], ctx: &mut Rltk) {
-    let mut x = 0;
-    let mut y = 0;
+pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
+    let mut viewsheds = ecs.write_storage::<Viewshed>();
+    let mut players = ecs.write_storage::<Player>();
+    let map = ecs.fetch::<Map>();
 
-    for tile in map {
-        match tile {
-            TileType::Water => {
-                ctx.set(
-                    x,
-                    y,
-                    // RGB::from_f32(1.0, 1.0, 1.0),
-                    RGB::from_u8(37, 150, 200),
-                    RGB::from_u8(37, 150, 190),
-                    rltk::to_cp437('.'),
-                );
+    for (_player, viewshed) in (&mut players, &mut viewsheds).join() {
+        let mut x = 0;
+        let mut y = 0;
+
+        for tile in map.tiles.iter() {
+            // render a tile based on its type
+            let pt = Point::new(x, y);
+            if viewshed.visible_tiles.contains(&pt) {
+                match tile {
+                    TileType::Water => {
+                        ctx.set(
+                            x,
+                            y,
+                            // RGB::from_f32(1.0, 1.0, 1.0),
+                            RGB::from_u8(37, 150, 200),
+                            RGB::from_u8(37, 150, 190),
+                            rltk::to_cp437('.'),
+                        );
+                    }
+                    TileType::Ground => {
+                        ctx.set(
+                            x,
+                            y,
+                            RGB::from_f32(0., 0., 0.),
+                            RGB::from_u8(234, 182, 118),
+                            rltk::to_cp437('.'),
+                        );
+                    }
+                }
             }
-            TileType::Ground => {
-                ctx.set(
-                    x,
-                    y,
-                    RGB::from_f32(0., 0., 0.),
-                    RGB::from_u8(234, 182, 118),
-                    rltk::to_cp437('.'),
-                );
+
+            // move the coords
+            x += 1;
+            if x > 79 {
+                x = 0;
+                y += 1;
             }
         }
-        // move the coords
-        x += 1;
-        if x > 79 {
-            x = 0;
-            y += 1;
-        }
+    }
+}
+
+impl BaseMap for Map {
+    fn is_opaque(&self, idx: usize) -> bool {
+        self.tiles[idx] == TileType::Water
+    }
+}
+
+impl Algorithm2D for Map {
+    fn dimensions(&self) -> Point {
+        Point::new(self.width, self.height)
     }
 }

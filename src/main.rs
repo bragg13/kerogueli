@@ -5,6 +5,8 @@ mod map;
 pub use map::*;
 mod rect;
 pub use rect::Rect;
+mod visibility_system;
+use visibility_system::VisibilitySystem;
 
 mod player;
 use rltk::{GameState, Rltk, VirtualKeyCode, RGB};
@@ -20,8 +22,8 @@ impl GameState for State {
 
         read_input(self, ctx);
         self.run_systems();
-        let map = self.ecs.fetch::<Map>();
-        draw_map(&map.tiles, ctx);
+        // let map = self.ecs.fetch::<Map>();
+        draw_map(&self.ecs, ctx);
 
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
@@ -54,6 +56,8 @@ pub fn read_input(gs: &mut State, ctx: &mut Rltk) {
 
 impl State {
     fn run_systems(&mut self) {
+        let mut vis = VisibilitySystem {};
+        vis.run_now(&self.ecs);
         self.ecs.maintain();
     }
 }
@@ -73,6 +77,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
+    gs.ecs.register::<Viewshed>();
 
     // creo un'entita player
     gs.ecs
@@ -87,6 +92,10 @@ fn main() -> rltk::BError {
             bg: RGB::named(rltk::BLACK),
         })
         .with(Player {})
+        .with(Viewshed {
+            visible_tiles: Vec::new(),
+            range: 8,
+        })
         .build();
 
     rltk::main_loop(context, gs)
