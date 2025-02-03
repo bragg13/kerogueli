@@ -10,11 +10,13 @@ pub enum TileType {
     Ground,
 }
 
+#[derive(Default)]
 pub struct Map {
     pub tiles: Vec<TileType>,
     pub rooms: Vec<Rect>,
     pub width: i32,
     pub height: i32,
+    pub revealed_tiles: Vec<bool>,
 }
 
 impl Map {
@@ -60,6 +62,7 @@ impl Map {
             rooms: Vec::new(),
             width: 80,
             height: 50,
+            revealed_tiles: vec![false; 80 * 50],
         };
 
         const MAX_ROOMS: i32 = 16;
@@ -111,14 +114,13 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
     let mut players = ecs.write_storage::<Player>();
     let map = ecs.fetch::<Map>();
 
-    for (_player, viewshed) in (&mut players, &mut viewsheds).join() {
+    for (_player, _viewshed) in (&mut players, &mut viewsheds).join() {
         let mut x = 0;
         let mut y = 0;
 
-        for tile in map.tiles.iter() {
+        for (idx, tile) in map.tiles.iter().enumerate() {
             // render a tile based on its type
-            let pt = Point::new(x, y);
-            if viewshed.visible_tiles.contains(&pt) {
+            if map.revealed_tiles[idx] {
                 match tile {
                     TileType::Water => {
                         ctx.set(
