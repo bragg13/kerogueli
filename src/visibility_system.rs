@@ -21,6 +21,7 @@ impl<'a> System<'a> for VisibilitySystem {
         // all the entities that have both position and viewshed
         for (ent, viewshed, pos) in (&entities, &mut viewshed, &pos).join() {
             if viewshed.dirty {
+                viewshed.dirty = false;
                 viewshed.visible_tiles.clear();
                 // &*map: "dereference, then get a reference", to unwrap Map from the ECS
                 viewshed.visible_tiles =
@@ -31,10 +32,14 @@ impl<'a> System<'a> for VisibilitySystem {
 
                 // if this is the player, reveal what they can see
                 let p: Option<&Player> = player.get(ent);
-                if let Some(p) = p {
+                if let Some(_p) = p {
+                    for t in map.visible_tiles.iter_mut() {
+                        *t = false
+                    }
                     for vis in viewshed.visible_tiles.iter() {
                         let idx = map.xy_idx(vis.x, vis.y);
                         map.revealed_tiles[idx] = true;
+                        map.visible_tiles[idx] = true;
                     }
                 }
             }

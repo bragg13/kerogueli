@@ -1,6 +1,6 @@
-use crate::{Player, Rect, Viewshed};
+use crate::Rect;
 use rltk::{Algorithm2D, BaseMap, Point, Rltk, RGB};
-use specs::{Join, World, WorldExt};
+use specs::World;
 use std::cmp::{max, min};
 
 // so I can copy and not "move", clone programmatically, and check for type equality
@@ -17,6 +17,7 @@ pub struct Map {
     pub width: i32,
     pub height: i32,
     pub revealed_tiles: Vec<bool>,
+    pub visible_tiles: Vec<bool>,
 }
 
 impl Map {
@@ -63,6 +64,7 @@ impl Map {
             width: 80,
             height: 50,
             revealed_tiles: vec![false; 80 * 50],
+            visible_tiles: vec![false; 80 * 50],
         };
 
         const MAX_ROOMS: i32 = 16;
@@ -110,46 +112,40 @@ impl Map {
 }
 
 pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
-    let mut viewsheds = ecs.write_storage::<Viewshed>();
-    let mut players = ecs.write_storage::<Player>();
     let map = ecs.fetch::<Map>();
+    let mut x = 0;
+    let mut y = 0;
 
-    for (_player, _viewshed) in (&mut players, &mut viewsheds).join() {
-        let mut x = 0;
-        let mut y = 0;
-
-        for (idx, tile) in map.tiles.iter().enumerate() {
-            // render a tile based on its type
-            if map.revealed_tiles[idx] {
-                match tile {
-                    TileType::Water => {
-                        ctx.set(
-                            x,
-                            y,
-                            // RGB::from_f32(1.0, 1.0, 1.0),
-                            RGB::from_u8(37, 150, 200),
-                            RGB::from_u8(37, 150, 190),
-                            rltk::to_cp437('.'),
-                        );
-                    }
-                    TileType::Ground => {
-                        ctx.set(
-                            x,
-                            y,
-                            RGB::from_f32(0., 0., 0.),
-                            RGB::from_u8(234, 182, 118),
-                            rltk::to_cp437('.'),
-                        );
-                    }
+    for (idx, tile) in map.tiles.iter().enumerate() {
+        // render a tile based on its type
+        if map.revealed_tiles[idx] {
+            let glyph;
+            let mut bg;
+            let fg;
+            match tile {
+                TileType::Water => {
+                    fg = RGB::from_u8(37, 150, 200);
+                    bg = RGB::from_u8(37, 150, 190);
+                    glyph = rltk::to_cp437('.');
+                }
+                TileType::Ground => {
+                    fg = RGB::from_f32(0., 0., 0.);
+                    bg = RGB::from_u8(234, 182, 118);
+                    glyph = rltk::to_cp437('.');
                 }
             }
-
-            // move the coords
-            x += 1;
-            if x > 79 {
-                x = 0;
-                y += 1;
+            if !map.visible_tiles[idx] {
+                bg = bg.to_greyscale();
             }
+
+            ctx.set(x, y, fg, bg, glyph);
+        }
+
+        // move the coords
+        x += 1;
+        if x > 79 {
+            x = 0;
+            y += 1;
         }
     }
 }
