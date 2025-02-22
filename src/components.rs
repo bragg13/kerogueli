@@ -24,3 +24,8 @@ pub struct Viewshed {
     pub range: i32,
     pub dirty: bool,
 }
+
+#[derive(Component)]
+pub struct RandomMovement {
+    pub probability: i32,
+}

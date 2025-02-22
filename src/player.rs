@@ -15,7 +15,6 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
         let new_x: i32 = pos.x + delta_x;
         let new_y: i32 = pos.y + delta_y;
 
-        // solution 1 - more scalable
         match map.tiles[map.xy_idx(new_x, new_y)] {
             TileType::Water => {}
             TileType::Ground => {
@@ -24,12 +23,6 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
                 viewshed.dirty = true;
             }
         }
-
-        // solution 2
-        // if map[xy_idx(new_x, new_y)] == TileType::Water {
-        //     pos.x = min(79, max(0, pos.x + delta_x));
-        //     pos.y = min(49, max(0, pos.y + delta_y));
-        // }
     }
 }
 
@@ -42,12 +35,14 @@ pub fn move_to_random_room(ecs: &mut World) {
     // prendo tutti i componenti Position e Player
     let mut positions = ecs.write_storage::<Position>();
     let mut players = ecs.write_storage::<Player>();
+    let mut viewsheds = ecs.write_storage::<Viewshed>();
 
     // joino Position e Player, quindi difatto prendo
     // l'unica entita che ha entrambi, aka il player
-    for (_player, pos) in (&mut players, &mut positions).join() {
+    for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viewsheds).join() {
         pos.x = map.rooms[room_index].center().0;
         pos.y = map.rooms[room_index].center().1;
+        viewshed.dirty = true;
         println!("Player teleported")
     }
 }
