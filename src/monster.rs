@@ -1,21 +1,25 @@
-use super::{Map, Position, RandomMovement, TileType};
+use crate::Viewshed;
+
+use super::{Map, Monster, Position, TileType};
 use rltk::RandomNumberGenerator;
 use specs::prelude::*;
 
-pub struct RandomMovementSystem;
+pub struct MonsterSystem;
 
-impl<'a> System<'a> for RandomMovementSystem {
+impl<'a> System<'a> for MonsterSystem {
     type SystemData = (
         WriteStorage<'a, Position>,
         ReadExpect<'a, Map>,
-        ReadStorage<'a, RandomMovement>,
+        ReadStorage<'a, Monster>,
+        ReadStorage<'a, Viewshed>,
     );
 
-    fn run(&mut self, (mut positions, map, random_movement): Self::SystemData) {
+    fn run(&mut self, data: Self::SystemData) {
         let mut rng = RandomNumberGenerator::new();
+        let (mut positions, map, monster, _viewshed) = data;
 
         let do_move = rng.range(0, 101);
-        for (pos, rand_mov) in (&mut positions, &random_movement).join() {
+        for (pos, rand_mov) in (&mut positions, &monster).join() {
             if do_move <= rand_mov.probability {
                 let offset_x = rng.range(-1, 2);
                 let offset_y = rng.range(-1, 2);

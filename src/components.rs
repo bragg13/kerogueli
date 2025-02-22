@@ -2,6 +2,12 @@ use rltk::RGB;
 use specs::prelude::*;
 use specs_derive::Component;
 
+#[derive(Clone, PartialEq, Copy)]
+pub enum RunState {
+    Paused,
+    Running,
+}
+
 #[derive(Component)]
 pub struct Position {
     pub x: i32,
@@ -26,6 +32,6 @@ pub struct Viewshed {
 }
 
 #[derive(Component)]
-pub struct RandomMovement {
+pub struct Monster {
     pub probability: i32,
 }
