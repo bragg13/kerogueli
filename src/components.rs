@@ -9,6 +9,11 @@ pub enum RunState {
 }
 
 #[derive(Component)]
+pub struct Name {
+    pub name: String,
+}
+
+#[derive(Component)]
 pub struct Position {
     pub x: i32,
     pub y: i32,

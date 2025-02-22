@@ -1,6 +1,7 @@
 use crate::{Map, Viewshed};
 
 use super::{Player, Position, TileType};
+use rltk::Point;
 use specs::prelude::*;
 use std::cmp::{max, min};
 
@@ -9,6 +10,8 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     let mut positions = ecs.write_storage::<Position>();
     let mut players = ecs.write_storage::<Player>();
     let mut viesheds = ecs.write_storage::<Viewshed>();
+    let mut ppos = ecs.write_resource::<Point>();
+
     let map = ecs.fetch::<Map>();
 
     for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viesheds).join() {
@@ -21,6 +24,10 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
                 pos.x = min(79, max(0, pos.x + delta_x));
                 pos.y = min(49, max(0, pos.y + delta_y));
                 viewshed.dirty = true;
+
+                // update the point on the ecs
+                ppos.x = pos.x;
+                ppos.y = pos.y;
             }
         }
     }

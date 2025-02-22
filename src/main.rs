@@ -12,7 +12,7 @@ mod monster;
 use monster::MonsterSystem;
 
 mod player;
-use rltk::{to_cp437, GameState, RandomNumberGenerator, Rltk, VirtualKeyCode, RGB};
+use rltk::{to_cp437, GameState, Point, RandomNumberGenerator, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
 
 pub struct State {
@@ -22,27 +22,38 @@ pub struct State {
 impl GameState for State {
     // this gets called at each frame - it's kind of the renderer I guess
     fn tick(&mut self, ctx: &mut Rltk) {
-        ctx.cls();
-
         read_input(self, ctx);
+
         if self.runstate == RunState::Running {
             self.run_systems();
+
+            ctx.cls();
+            draw_map(&self.ecs, ctx);
+
+            let positions = self.ecs.read_storage::<Position>();
+            let renderables = self.ecs.read_storage::<Renderable>();
+            let names = self.ecs.read_storage::<Name>();
+            let map = self.ecs.fetch::<Map>();
+
+            // draw entities with a renderable compoennt attached
+            for (pos, render, name) in (&positions, &renderables, &names).join() {
+                let idx = map.xy_idx(pos.x, pos.y);
+                if map.visible_tiles[idx] {
+                    // to draw viewshed
+                    // if name.name != "Player" {
+                    //     for vs_tile in &viewshed.visible_tiles {
+                    //         if map.tiles[vs_tile.to_index(80)] == TileType::Ground {
+                    //             ctx.set(vs_tile.x, vs_tile.y, render.fg, render.bg, to_cp437('.'));
+                    //         }
+                    //     }
+                    // }
+                    ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
+                    println!("Drawn {}", name.name);
+                }
+            }
             self.runstate = RunState::Paused;
         } else {
             self.runstate = read_input(self, ctx);
-        }
-
-        draw_map(&self.ecs, ctx);
-
-        let positions = self.ecs.read_storage::<Position>();
-        let renderables = self.ecs.read_storage::<Renderable>();
-        let map = self.ecs.fetch::<Map>();
-
-        for (pos, render) in (&positions, &renderables).join() {
-            let idx = map.xy_idx(pos.x, pos.y);
-            if map.visible_tiles[idx] {
-                ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
-            }
         }
     }
 }
@@ -97,6 +108,10 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Player>();
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<Monster>();
+    gs.ecs.register::<Name>();
+
+    // because many systems will require this
+    gs.ecs.insert(Point::new(player_x, player_y));
 
     // creo un'entita player
     gs.ecs
@@ -104,6 +119,9 @@ fn main() -> rltk::BError {
         .with(Position {
             x: player_x,
             y: player_y,
+        })
+        .with(Name {
+            name: "Player".to_string(),
         })
         .with(Renderable {
             glyph: rltk::to_cp437('@'),
@@ -120,21 +138,33 @@ fn main() -> rltk::BError {
 
     // creo un'entita monster per ogni stanza
     let mut rng = RandomNumberGenerator::new();
-    for room in map.rooms.iter().skip(1) {
+    for (i, room) in map.rooms.iter().skip(1).enumerate() {
         let monster_pos = room.center();
         let create_entity = gs.ecs.create_entity();
-        let move_prob = rng.range(0, 51);
         let glyph: rltk::FontCharType;
         let roll = rng.roll_dice(1, 2);
+        let move_prob: i32;
+        let name: String;
 
         match roll {
-            1 => glyph = to_cp437('!'),
-            _ => glyph = to_cp437('?'),
+            1 => {
+                glyph = to_cp437('!');
+                move_prob = rng.range(20, 81);
+                name = "Vosklamati".to_string();
+            }
+            _ => {
+                glyph = to_cp437('?');
+                move_prob = rng.range(20, 51);
+                name = "Vokastati".to_string();
+            }
         }
         create_entity
             .with(Position {
                 x: monster_pos.0,
                 y: monster_pos.1,
+            })
+            .with(Name {
+                name: format!("{} #{}", &name, i),
             })
             .with(Monster {
                 probability: move_prob,
@@ -146,7 +176,7 @@ fn main() -> rltk::BError {
             })
             .with(Viewshed {
                 visible_tiles: Vec::new(),
-                range: 5,
+                range: 3,
                 dirty: true,
             })
             .build();
