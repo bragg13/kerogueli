@@ -40,18 +40,22 @@ impl Map {
     fn apply_htunnel(&mut self, x1: i32, x2: i32, y: i32) {
         for x in min(x1, x2)..=max(x1, x2) {
             let idx = self.xy_idx(x, y);
+            let idx_expanded = self.xy_idx(x, y + 1);
             let height_times_width = self.width as usize * self.height as usize;
             if idx > 0 && idx < height_times_width {
                 self.tiles[idx as usize] = TileType::Ground;
+                self.tiles[idx_expanded as usize] = TileType::Ground;
             }
         }
     }
     fn apply_vtunnel(&mut self, y1: i32, y2: i32, x: i32) {
         for y in min(y1, y2)..=max(y1, y2) {
             let idx = self.xy_idx(x, y);
+            let idx_expanded = self.xy_idx(x + 1, y);
             let height_times_width = self.width as usize * self.height as usize;
             if idx > 0 && idx < height_times_width {
                 self.tiles[idx as usize] = TileType::Ground;
+                self.tiles[idx_expanded as usize] = TileType::Ground;
             }
         }
     }
@@ -67,7 +71,7 @@ impl Map {
             visible_tiles: vec![false; 80 * 50],
         };
 
-        const MAX_ROOMS: i32 = 16;
+        const MAX_ROOMS: i32 = 26;
         const MIN_SIZE: i32 = 6;
         const MAX_SIZE: i32 = 15;
 
