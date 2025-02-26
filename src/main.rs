@@ -131,7 +131,7 @@ fn main() -> rltk::BError {
         .with(Player {})
         .with(Viewshed {
             visible_tiles: Vec::new(),
-            range: 12,
+            range: 8,
             dirty: true,
         })
         .build();
@@ -176,7 +176,7 @@ fn main() -> rltk::BError {
             })
             .with(Viewshed {
                 visible_tiles: Vec::new(),
-                range: 3,
+                range: 8,
                 dirty: true,
             })
             .build();
