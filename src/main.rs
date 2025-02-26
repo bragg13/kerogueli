@@ -10,6 +10,8 @@ mod visibility_system;
 use visibility_system::VisibilitySystem;
 mod monster;
 use monster::MonsterSystem;
+mod map_indexing_system;
+use map_indexing_system::MapIndexingSystem;
 
 mod player;
 use rltk::{to_cp437, GameState, Point, RandomNumberGenerator, Rltk, VirtualKeyCode, RGB};
@@ -36,19 +38,10 @@ impl GameState for State {
             let map = self.ecs.fetch::<Map>();
 
             // draw entities with a renderable compoennt attached
-            for (pos, render, name) in (&positions, &renderables, &names).join() {
+            for (pos, render, _name) in (&positions, &renderables, &names).join() {
                 let idx = map.xy_idx(pos.x, pos.y);
                 if map.visible_tiles[idx] {
-                    // to draw viewshed
-                    // if name.name != "Player" {
-                    //     for vs_tile in &viewshed.visible_tiles {
-                    //         if map.tiles[vs_tile.to_index(80)] == TileType::Ground {
-                    //             ctx.set(vs_tile.x, vs_tile.y, render.fg, render.bg, to_cp437('.'));
-                    //         }
-                    //     }
-                    // }
                     ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
-                    println!("Drawn {}", name.name);
                 }
             }
             self.runstate = RunState::Paused;
@@ -83,7 +76,9 @@ impl State {
     fn run_systems(&mut self) {
         let mut vis = VisibilitySystem {};
         let mut rand_mov = MonsterSystem {};
+        let mut map_indexing = MapIndexingSystem {};
         rand_mov.run_now(&self.ecs);
+        map_indexing.run_now(&self.ecs);
         vis.run_now(&self.ecs);
         self.ecs.maintain();
     }
@@ -108,6 +103,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Player>();
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<Monster>();
+    gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<Name>();
 
     // because many systems will require this
@@ -128,6 +124,7 @@ fn main() -> rltk::BError {
             fg: RGB::named(rltk::YELLOW),
             bg: RGB::named(rltk::BLACK),
         })
+        .with(BlocksTile {})
         .with(Player {})
         .with(Viewshed {
             visible_tiles: Vec::new(),
@@ -143,18 +140,15 @@ fn main() -> rltk::BError {
         let create_entity = gs.ecs.create_entity();
         let glyph: rltk::FontCharType;
         let roll = rng.roll_dice(1, 2);
-        let move_prob: i32;
         let name: String;
 
         match roll {
             1 => {
                 glyph = to_cp437('!');
-                move_prob = rng.range(20, 81);
                 name = "Vosklamati".to_string();
             }
             _ => {
                 glyph = to_cp437('?');
-                move_prob = rng.range(20, 51);
                 name = "Vokastati".to_string();
             }
         }
@@ -166,9 +160,8 @@ fn main() -> rltk::BError {
             .with(Name {
                 name: format!("{} #{}", &name, i),
             })
-            .with(Monster {
-                probability: move_prob,
-            })
+            .with(Monster {})
+            .with(BlocksTile {})
             .with(Renderable {
                 glyph,
                 fg: RGB::named(rltk::GREEN),

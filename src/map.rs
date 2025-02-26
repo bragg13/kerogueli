@@ -18,6 +18,7 @@ pub struct Map {
     pub height: i32,
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
+    pub blocked: Vec<bool>,
 }
 
 impl Map {
@@ -34,7 +35,7 @@ impl Map {
             return false;
         }
         let idx = self.xy_idx(x, y);
-        self.tiles[idx as usize] != TileType::Water
+        !self.blocked[idx as usize]
     }
 
     // == rooms and corridors ==
@@ -72,6 +73,12 @@ impl Map {
         }
     }
 
+    pub fn populate_blocked(&mut self) {
+        for (i, tile) in self.tiles.iter().enumerate() {
+            self.blocked[i] = *tile == TileType::Water;
+        }
+    }
+
     /// Generate a new map with random rooms connected by corridors
     pub fn new_map_rooms_and_corridors() -> Map {
         let mut map = Map {
@@ -81,6 +88,7 @@ impl Map {
             height: 50,
             revealed_tiles: vec![false; 80 * 50],
             visible_tiles: vec![false; 80 * 50],
+            blocked: vec![false; 80 * 50],
         };
 
         const MAX_ROOMS: i32 = 26;
@@ -136,7 +144,7 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
         // render a tile based on its type
         if map.revealed_tiles[idx] {
             let glyph;
-            let mut bg;
+            let bg;
             let fg;
             match tile {
                 TileType::Water => {
@@ -150,9 +158,10 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
                     glyph = rltk::to_cp437('.');
                 }
             }
-            if !map.visible_tiles[idx] {
-                bg = bg.to_greyscale();
-            }
+            // this makes the revelaed tiles greyscale - not my fav effect
+            // if !map.visible_tiles[idx] {
+            //     bg = bg.to_greyscale();
+            // }
 
             ctx.set(x, y, fg, bg, glyph);
         }

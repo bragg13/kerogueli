@@ -1,5 +1,5 @@
-use super::{Map, Monster, Name, Position, TileType, Viewshed};
-use rltk::{Point, RandomNumberGenerator};
+use super::{Map, Monster, Name, Position, Viewshed};
+use rltk::Point;
 use specs::prelude::*;
 
 pub struct MonsterSystem {}
@@ -20,10 +20,18 @@ impl<'a> System<'a> for MonsterSystem {
         let (mut positions, mut map, monster, name, mut viewshed, player_pos) = data;
 
         // monsters with a viewshed, a name, a position (and a monster component clearly)
-        for (mut viewshed, _monster, name, mut position) in
+        for (viewshed, _monster, name, position) in
             (&mut viewshed, &monster, &name, &mut positions).join()
         {
-            // if sees the player
+            // if close to the player, attacks
+            let distance = rltk::DistanceAlg::Pythagoras
+                .distance2d(Point::new(position.x, position.y), *player_pos);
+            if distance < 1.5 {
+                println!("Attacco!");
+                return;
+            }
+
+            // if not close enough but sees the player
             if viewshed.visible_tiles.contains(&*player_pos) {
                 println!("Monster {} sees the player", name.name);
 

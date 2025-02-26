@@ -36,7 +36,8 @@ pub struct Viewshed {
     pub dirty: bool,
 }
 
-#[derive(Component)]
-pub struct Monster {
-    pub probability: i32,
-}
+#[derive(Component, Debug)]
+pub struct Monster {}
+
+#[derive(Component, Debug)]
+pub struct BlocksTile {}
