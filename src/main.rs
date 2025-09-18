@@ -128,7 +128,7 @@ fn main() -> rltk::BError {
         .with(Player {})
         .with(Viewshed {
             visible_tiles: Vec::new(),
-            range: 8,
+            range: 10,
             dirty: true,
         })
         .build();
@@ -144,11 +144,11 @@ fn main() -> rltk::BError {
 
         match roll {
             1 => {
-                glyph = to_cp437('!');
+                glyph = to_cp437('$');
                 name = "Vosklamati".to_string();
             }
             _ => {
-                glyph = to_cp437('?');
+                glyph = to_cp437('£');
                 name = "Vokastati".to_string();
             }
         }
@@ -169,7 +169,7 @@ fn main() -> rltk::BError {
             })
             .with(Viewshed {
                 visible_tiles: Vec::new(),
-                range: 8,
+                range: 5,
                 dirty: true,
             })
             .build();
